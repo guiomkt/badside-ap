@@ -27,10 +27,10 @@ export default function Sidebar() {
   const [expandedClient, setExpandedClient] = useState<string | null>(null);
   const [user, setUser] = useState<UserInfo | null>(null);
   const router = useRouter();
-  const supabase = createClient();
 
   useEffect(() => {
     async function getUser() {
+      const supabase = createClient();
       const { data: { user } } = await supabase.auth.getUser();
       if (user) {
         const name =
@@ -52,6 +52,7 @@ export default function Sidebar() {
   }, []);
 
   async function handleSignOut() {
+    const supabase = createClient();
     await supabase.auth.signOut();
     router.push("/login");
   }

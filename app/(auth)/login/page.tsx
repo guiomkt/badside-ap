@@ -9,8 +9,6 @@ export default function LoginPage() {
   const [magicLinkSent, setMagicLinkSent] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const supabase = createClient();
-
   const ALLOWED_DOMAIN = "2be.com.br";
 
   async function handleMagicLink(e: React.FormEvent) {
@@ -23,6 +21,7 @@ export default function LoginPage() {
     }
 
     setLoading(true);
+    const supabase = createClient();
 
     const { error } = await supabase.auth.signInWithOtp({
       email,
