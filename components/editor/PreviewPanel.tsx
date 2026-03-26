@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import FloatingToolbar from "./FloatingToolbar";
 import ThumbnailStrip from "./ThumbnailStrip";
 import SlideIndicator from "./SlideIndicator";
@@ -17,26 +17,46 @@ export default function PreviewPanel({
   totalSlides,
 }: PreviewPanelProps) {
   const [activeSlide, setActiveSlide] = useState(currentSlide);
+  const iframeRef = useRef<HTMLIFrameElement>(null);
+
+  // Update active slide when totalSlides changes (e.g. after generation)
+  useEffect(() => {
+    if (totalSlides > 0 && activeSlide > totalSlides) {
+      setActiveSlide(1);
+    }
+  }, [totalSlides, activeSlide]);
+
+  // Update iframe when htmlContent changes
+  useEffect(() => {
+    if (iframeRef.current && htmlContent) {
+      iframeRef.current.srcdoc = htmlContent;
+    }
+  }, [htmlContent]);
+
+  const hasContent = !!htmlContent && totalSlides > 0;
 
   return (
     <div className="flex-1 bg-[#f3f3f3] flex flex-col items-center justify-center relative h-full overflow-hidden">
       {/* Floating toolbar */}
-      <FloatingToolbar />
+      {hasContent && <FloatingToolbar />}
 
       {/* Slide canvas area */}
       <div className="flex items-stretch w-full max-w-[90%] flex-1 py-16 gap-0">
         {/* Thumbnail strip */}
-        <ThumbnailStrip
-          totalSlides={totalSlides}
-          activeSlide={activeSlide}
-          onSlideClick={setActiveSlide}
-        />
+        {hasContent && (
+          <ThumbnailStrip
+            totalSlides={totalSlides}
+            activeSlide={activeSlide}
+            onSlideClick={setActiveSlide}
+          />
+        )}
 
         {/* Main slide canvas */}
         <div className="flex-1 flex items-center justify-center px-4">
           <div className="w-full aspect-[16/9] bg-white rounded-lg shadow-2xl overflow-hidden relative">
             {htmlContent ? (
               <iframe
+                ref={iframeRef}
                 srcDoc={htmlContent}
                 className="w-full h-full border-0"
                 title="Slide Preview"
@@ -50,10 +70,10 @@ export default function PreviewPanel({
                   </span>
                 </div>
                 <h3 className="text-lg font-semibold text-[--color-on-surface] tight-tracking mb-1">
-                  Preview da Apresentação
+                  Preview da Apresentacao
                 </h3>
                 <p className="text-sm text-[--color-on-surface-variant] max-w-xs">
-                  Descreva sua apresentação no chat e a IA irá gerar os slides
+                  Descreva sua apresentacao no chat e a IA ira gerar os slides
                   automaticamente.
                 </p>
               </div>
@@ -63,13 +83,15 @@ export default function PreviewPanel({
       </div>
 
       {/* Bottom indicator */}
-      <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-10">
-        <SlideIndicator
-          current={activeSlide}
-          total={totalSlides}
-          statusText="Editando"
-        />
-      </div>
+      {hasContent && (
+        <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-10">
+          <SlideIndicator
+            current={activeSlide}
+            total={totalSlides}
+            statusText="Editando"
+          />
+        </div>
+      )}
     </div>
   );
 }

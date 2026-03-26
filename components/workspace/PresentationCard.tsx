@@ -1,40 +1,65 @@
-"use client";
-
 import Link from "next/link";
 
 interface PresentationCardProps {
+  id: string;
   title: string;
-  thumbnailUrl: string;
-  status: "live" | "draft";
-  editedAt: string;
   slug: string;
+  status: string;
+  updated_at: string;
+  thumbnail_url: string | null;
+  workspace_slug: string;
+}
+
+function formatDate(dateStr: string): string {
+  const date = new Date(dateStr);
+  const now = new Date();
+  const diffMs = now.getTime() - date.getTime();
+  const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
+  const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+
+  if (diffHours < 1) return "agora mesmo";
+  if (diffHours < 24) return `há ${diffHours} hora${diffHours > 1 ? "s" : ""}`;
+  if (diffDays < 7) return `há ${diffDays} dia${diffDays > 1 ? "s" : ""}`;
+
+  return new Intl.DateTimeFormat("pt-BR", {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+  }).format(date);
 }
 
 export default function PresentationCard({
   title,
-  thumbnailUrl,
-  status,
-  editedAt,
   slug,
+  status,
+  updated_at,
+  thumbnail_url,
+  workspace_slug,
 }: PresentationCardProps) {
+  const isLive = status === "published" || status === "live";
+
   return (
-    <Link href={`/d/${slug}`} className="group block">
+    <Link href={`/w/${workspace_slug}/${slug}/edit`} className="group block">
       <div className="overflow-hidden rounded-xl bg-white shadow-[0_10px_40px_rgba(26,28,28,0.04)] transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_15px_50px_rgba(209,36,41,0.08)]">
         {/* Thumbnail */}
         <div className="relative aspect-video overflow-hidden bg-zinc-100">
-          {thumbnailUrl ? (
+          {thumbnail_url ? (
             <img
-              src={thumbnailUrl}
+              src={thumbnail_url}
               alt={title}
               className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
             />
           ) : (
-            <div className="h-full w-full bg-gradient-to-br from-zinc-200 to-zinc-300" />
+            <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-zinc-200 to-zinc-300">
+              <span className="material-symbols-outlined text-4xl text-zinc-400">
+                slideshow
+              </span>
+            </div>
           )}
 
           {/* Status Badge */}
           <div className="absolute left-3 top-3">
-            {status === "live" ? (
+            {isLive ? (
               <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-500/90 px-3 py-1 text-xs font-semibold text-white backdrop-blur-sm">
                 <span className="relative flex h-2 w-2">
                   <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-white opacity-75" />
@@ -66,15 +91,9 @@ export default function PresentationCard({
             {title}
           </h3>
           <div className="mt-2 flex items-center justify-between">
-            <p className="text-sm text-zinc-400">Editado {editedAt}</p>
-            <div className="flex -space-x-1.5">
-              {[0, 1].map((i) => (
-                <div
-                  key={i}
-                  className="h-6 w-6 rounded-full border-2 border-white bg-gradient-to-br from-zinc-300 to-zinc-400"
-                />
-              ))}
-            </div>
+            <p className="text-sm text-zinc-400">
+              Editado {formatDate(updated_at)}
+            </p>
           </div>
         </div>
       </div>

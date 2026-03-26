@@ -3,8 +3,10 @@
 import { useState, useRef, useEffect } from "react";
 
 interface Message {
+  id?: string;
   role: "user" | "assistant";
   content: string;
+  created_at?: string;
 }
 
 interface ChatPanelProps {
@@ -12,6 +14,7 @@ interface ChatPanelProps {
   messages: Message[];
   isGenerating: boolean;
   progress: number;
+  error?: string | null;
 }
 
 export default function ChatPanel({
@@ -19,6 +22,7 @@ export default function ChatPanel({
   messages,
   isGenerating,
   progress,
+  error,
 }: ChatPanelProps) {
   const [input, setInput] = useState("");
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -30,7 +34,7 @@ export default function ChatPanel({
 
   const handleSend = () => {
     const trimmed = input.trim();
-    if (!trimmed) return;
+    if (!trimmed || isGenerating) return;
     onSendMessage(trimmed);
     setInput("");
     if (textareaRef.current) {
@@ -52,14 +56,17 @@ export default function ChatPanel({
     ta.style.height = Math.min(ta.scrollHeight, 120) + "px";
   };
 
-  const formatTime = (idx: number) => {
-    const base = new Date();
-    base.setMinutes(base.getMinutes() - (messages.length - idx) * 2);
-    return base.toLocaleTimeString("pt-BR", {
-      hour: "2-digit",
-      minute: "2-digit",
-    });
+  const formatTime = (msg: Message) => {
+    if (msg.created_at) {
+      return new Date(msg.created_at).toLocaleTimeString("pt-BR", {
+        hour: "2-digit",
+        minute: "2-digit",
+      });
+    }
+    return "";
   };
+
+  const hasMessages = messages.length > 0;
 
   return (
     <div className="w-[35%] min-w-[340px] h-full flex flex-col bg-white/40 glass-panel border-r border-white/50">
@@ -75,7 +82,7 @@ export default function ChatPanel({
             GUIO Assistant
           </h2>
           <p className="text-[11px] text-[--color-on-surface-variant]">
-            AI Copilot
+            {isGenerating ? "Generating..." : "AI Copilot"}
           </p>
         </div>
         <button className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-zinc-100/50 transition-colors">
@@ -87,9 +94,19 @@ export default function ChatPanel({
 
       {/* Messages */}
       <div className="flex-1 overflow-y-auto no-scrollbar px-4 py-4 space-y-4">
-        {messages.map((msg, idx) => (
+        {/* Welcome message when no messages exist */}
+        {!hasMessages && (
+          <div className="flex flex-col items-start">
+            <div className="max-w-[85%] px-4 py-2.5 text-sm leading-relaxed bg-white border border-zinc-200/60 rounded-2xl rounded-tl-none text-[--color-on-surface]">
+              Ola! Sou o GUIO Assistant. Descreva a apresentacao que deseja
+              criar e eu vou gerar os slides para voce.
+            </div>
+          </div>
+        )}
+
+        {messages.map((msg) => (
           <div
-            key={idx}
+            key={msg.id ?? msg.created_at ?? msg.content.slice(0, 20)}
             className={`flex flex-col ${
               msg.role === "user" ? "items-end" : "items-start"
             }`}
@@ -103,11 +120,22 @@ export default function ChatPanel({
             >
               {msg.content}
             </div>
-            <span className="text-[10px] text-[--color-on-surface-variant]/50 mt-1 px-1">
-              {formatTime(idx)}
-            </span>
+            {formatTime(msg) && (
+              <span className="text-[10px] text-[--color-on-surface-variant]/50 mt-1 px-1">
+                {formatTime(msg)}
+              </span>
+            )}
           </div>
         ))}
+
+        {/* Error indicator */}
+        {error && !isGenerating && (
+          <div className="flex flex-col items-start">
+            <div className="max-w-[85%] px-4 py-2.5 text-sm leading-relaxed bg-red-50 border border-red-200/60 rounded-2xl rounded-tl-none text-red-700">
+              {error}
+            </div>
+          </div>
+        )}
 
         {/* Generating indicator */}
         {isGenerating && (
@@ -119,7 +147,11 @@ export default function ChatPanel({
                 <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-[#d12429]" />
               </span>
               <span className="text-xs font-medium text-[--color-on-surface-variant]">
-                Generating Slides...
+                {progress < 85
+                  ? "Generating Slides..."
+                  : progress < 90
+                  ? "Validating..."
+                  : "Compiling HTML..."}
               </span>
             </div>
 
@@ -155,12 +187,17 @@ export default function ChatPanel({
             value={input}
             onChange={handleInput}
             onKeyDown={handleKeyDown}
-            placeholder="Descreva sua apresentação..."
-            className="flex-1 bg-transparent text-sm text-[--color-on-surface] placeholder:text-[--color-on-surface-variant]/40 resize-none outline-none max-h-[120px]"
+            placeholder={
+              isGenerating
+                ? "Aguarde a geracao..."
+                : "Descreva sua apresentacao..."
+            }
+            disabled={isGenerating}
+            className="flex-1 bg-transparent text-sm text-[--color-on-surface] placeholder:text-[--color-on-surface-variant]/40 resize-none outline-none max-h-[120px] disabled:opacity-50"
           />
           <button
             onClick={handleSend}
-            disabled={!input.trim()}
+            disabled={!input.trim() || isGenerating}
             className="w-9 h-9 flex-shrink-0 flex items-center justify-center rounded-xl premium-gradient text-white disabled:opacity-40 transition-opacity"
           >
             <span

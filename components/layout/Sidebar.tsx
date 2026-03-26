@@ -1,7 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import TrafficLights from "@/components/layout/TrafficLights";
+import { createClient } from "@/lib/supabase/client";
 
 const navItems = [
   { label: "Workspaces", icon: "workspaces", active: true },
@@ -15,8 +17,44 @@ const clients = [
   { name: "Cliente Gamma", icon: "folder" },
 ];
 
+interface UserInfo {
+  name: string;
+  email: string;
+  initials: string;
+}
+
 export default function Sidebar() {
   const [expandedClient, setExpandedClient] = useState<string | null>(null);
+  const [user, setUser] = useState<UserInfo | null>(null);
+  const router = useRouter();
+  const supabase = createClient();
+
+  useEffect(() => {
+    async function getUser() {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        const name =
+          user.user_metadata?.full_name ||
+          user.user_metadata?.name ||
+          user.email?.split("@")[0] ||
+          "User";
+        const email = user.email || "";
+        const initials = name
+          .split(" ")
+          .map((n: string) => n[0])
+          .join("")
+          .toUpperCase()
+          .slice(0, 2);
+        setUser({ name, email, initials });
+      }
+    }
+    getUser();
+  }, []);
+
+  async function handleSignOut() {
+    await supabase.auth.signOut();
+    router.push("/login");
+  }
 
   return (
     <aside className="fixed left-0 top-0 h-full w-[260px] bg-white/80 backdrop-blur-xl border-r border-zinc-200/50 flex flex-col z-50">
@@ -119,16 +157,25 @@ export default function Sidebar() {
         {/* User Avatar */}
         <div className="flex items-center gap-3 px-3 py-2 mt-2">
           <div className="w-8 h-8 rounded-full bg-[--color-primary-container] flex items-center justify-center text-white text-xs font-semibold">
-            GU
+            {user?.initials || ".."}
           </div>
           <div className="flex-1 min-w-0">
             <p className="text-sm font-medium text-[--color-on-surface] truncate">
-              GUIO User
+              {user?.name || "Carregando..."}
             </p>
             <p className="text-[11px] text-[--color-on-surface-variant] truncate">
-              user@guio.com
+              {user?.email || ""}
             </p>
           </div>
+          <button
+            onClick={handleSignOut}
+            title="Sair"
+            className="p-1 rounded-lg text-[--color-on-surface-variant] hover:bg-zinc-100/30 transition-colors"
+          >
+            <span className="material-symbols-outlined text-[18px]">
+              logout
+            </span>
+          </button>
         </div>
       </div>
     </aside>

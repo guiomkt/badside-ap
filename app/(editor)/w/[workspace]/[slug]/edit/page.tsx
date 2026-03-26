@@ -1,121 +1,28 @@
 "use client";
 
-import { useState } from "react";
+import { use } from "react";
 import TrafficLights from "@/components/layout/TrafficLights";
 import ChatPanel from "@/components/editor/ChatPanel";
 import PreviewPanel from "@/components/editor/PreviewPanel";
+import { usePresentation } from "@/lib/hooks/usePresentation";
 
-interface Message {
-  role: "user" | "assistant";
-  content: string;
-}
+export default function EditorPage({
+  params,
+}: {
+  params: Promise<{ workspace: string; slug: string }>;
+}) {
+  const { workspace, slug } = use(params);
+  const {
+    presentation,
+    messages,
+    isLoading,
+    isGenerating,
+    progress,
+    error,
+    sendMessage,
+  } = usePresentation(workspace, slug);
 
-const initialMessages: Message[] = [
-  {
-    role: "assistant",
-    content:
-      "Olá! Sou o GUIO Assistant. Descreva a apresentação que deseja criar e eu vou gerar os slides para você.",
-  },
-  {
-    role: "user",
-    content:
-      "Preciso de uma apresentação sobre o relatório trimestral da empresa, com foco em resultados de vendas e metas para o próximo trimestre.",
-  },
-  {
-    role: "assistant",
-    content:
-      "Perfeito! Vou criar uma apresentação com os seguintes slides:\n\n1. Capa — Relatório Trimestral\n2. Resumo Executivo\n3. Resultados de Vendas\n4. Análise por Região\n5. Metas Q2 2026\n\nGerando os slides agora...",
-  },
-];
-
-const sampleSlideHTML = `<!DOCTYPE html>
-<html>
-<head>
-  <style>
-    * { margin: 0; padding: 0; box-sizing: border-box; }
-    body {
-      font-family: 'Inter', -apple-system, sans-serif;
-      width: 100%; height: 100vh;
-      display: flex; flex-direction: column;
-      background: linear-gradient(135deg, #ffffff 0%, #f8f8f8 100%);
-      padding: 48px 56px;
-    }
-    .badge {
-      display: inline-flex; align-items: center; gap: 6px;
-      background: rgba(172,0,21,0.06); color: #ac0015;
-      padding: 6px 14px; border-radius: 100px;
-      font-size: 11px; font-weight: 600;
-      text-transform: uppercase; letter-spacing: 0.05em;
-      margin-bottom: 20px; width: fit-content;
-    }
-    .badge-dot { width: 6px; height: 6px; background: #d12429; border-radius: 50%; }
-    h1 {
-      font-size: 36px; font-weight: 800;
-      color: #1a1c1c; letter-spacing: -0.03em;
-      line-height: 1.15; margin-bottom: 12px;
-    }
-    h1 span { color: #d12429; }
-    .subtitle {
-      font-size: 15px; color: #5c403d;
-      line-height: 1.6; max-width: 520px;
-    }
-    .metrics {
-      display: flex; gap: 20px; margin-top: auto;
-    }
-    .metric {
-      flex: 1; background: white;
-      border: 1px solid rgba(0,0,0,0.06);
-      border-radius: 16px; padding: 20px;
-    }
-    .metric-label { font-size: 11px; color: #5c403d; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 8px; }
-    .metric-value { font-size: 28px; font-weight: 800; color: #1a1c1c; letter-spacing: -0.02em; }
-    .metric-change { font-size: 12px; color: #28C840; font-weight: 600; margin-top: 4px; }
-    .accent-bar { width: 100%; height: 4px; background: linear-gradient(90deg, #ac0015, #d12429); border-radius: 2px; margin-top: 24px; }
-  </style>
-</head>
-<body>
-  <div class="badge"><div class="badge-dot"></div>Relatório Q1 2026</div>
-  <h1>Resultados <span>Trimestrais</span></h1>
-  <p class="subtitle">Análise completa de performance com foco em receita, novos clientes e expansão de mercado para o primeiro trimestre de 2026.</p>
-  <div class="metrics">
-    <div class="metric">
-      <div class="metric-label">Receita</div>
-      <div class="metric-value">R$ 4.2M</div>
-      <div class="metric-change">+18% vs Q4</div>
-    </div>
-    <div class="metric">
-      <div class="metric-label">Novos Clientes</div>
-      <div class="metric-value">342</div>
-      <div class="metric-change">+24% vs Q4</div>
-    </div>
-    <div class="metric">
-      <div class="metric-label">NPS Score</div>
-      <div class="metric-value">78</div>
-      <div class="metric-change">+5 pontos</div>
-    </div>
-  </div>
-  <div class="accent-bar"></div>
-</body>
-</html>`;
-
-export default function EditorPage() {
-  const [messages, setMessages] = useState<Message[]>(initialMessages);
-  const [isGenerating, setIsGenerating] = useState(true);
-  const [progress, setProgress] = useState(74);
-
-  const handleSendMessage = (msg: string) => {
-    setMessages((prev) => [...prev, { role: "user", content: msg }]);
-    // Simulate AI response
-    setTimeout(() => {
-      setMessages((prev) => [
-        ...prev,
-        {
-          role: "assistant",
-          content: "Entendido! Estou atualizando os slides com as alterações solicitadas.",
-        },
-      ]);
-    }, 1000);
-  };
+  const slideCount = presentation?.slide_data?.slides?.length ?? 0;
 
   return (
     <div className="h-screen w-screen flex flex-col overflow-hidden bg-[--color-surface]">
@@ -149,6 +56,23 @@ export default function EditorPage() {
             </button>
           ))}
         </div>
+
+        {/* Center: title */}
+        {presentation && (
+          <div className="flex items-center gap-2 ml-4">
+            <span className="text-xs text-[--color-on-surface-variant]/60">
+              /
+            </span>
+            <span className="text-xs font-medium text-[--color-on-surface] truncate max-w-[200px]">
+              {presentation.title || "Untitled"}
+            </span>
+            {presentation.status === "generated" && (
+              <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-green-100 text-green-700 font-medium">
+                Saved
+              </span>
+            )}
+          </div>
+        )}
 
         {/* Right section */}
         <div className="flex items-center gap-2 ml-auto">
@@ -184,27 +108,43 @@ export default function EditorPage() {
 
       {/* Main split layout */}
       <div className="flex flex-1 overflow-hidden">
-        <ChatPanel
-          onSendMessage={handleSendMessage}
-          messages={messages}
-          isGenerating={isGenerating}
-          progress={progress}
-        />
-        <PreviewPanel
-          htmlContent={sampleSlideHTML}
-          currentSlide={1}
-          totalSlides={5}
-        />
+        {isLoading ? (
+          <div className="flex-1 flex items-center justify-center">
+            <div className="flex flex-col items-center gap-3">
+              <div className="w-8 h-8 border-2 border-zinc-300 border-t-[#d12429] rounded-full animate-spin" />
+              <span className="text-sm text-[--color-on-surface-variant]">
+                Loading presentation...
+              </span>
+            </div>
+          </div>
+        ) : (
+          <>
+            <ChatPanel
+              onSendMessage={sendMessage}
+              messages={messages}
+              isGenerating={isGenerating}
+              progress={progress}
+              error={error}
+            />
+            <PreviewPanel
+              htmlContent={presentation?.html_content ?? undefined}
+              currentSlide={1}
+              totalSlides={slideCount}
+            />
+          </>
+        )}
       </div>
 
       {/* LIVE badge */}
-      <div className="fixed bottom-4 right-4 z-50 flex items-center gap-2 bg-zinc-900 text-white px-4 py-2 rounded-full shadow-lg text-xs font-medium">
-        <span className="relative flex h-2 w-2">
-          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75" />
-          <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500" />
-        </span>
-        LIVE: Presentation Preview
-      </div>
+      {isGenerating && (
+        <div className="fixed bottom-4 right-4 z-50 flex items-center gap-2 bg-zinc-900 text-white px-4 py-2 rounded-full shadow-lg text-xs font-medium">
+          <span className="relative flex h-2 w-2">
+            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75" />
+            <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500" />
+          </span>
+          AI Generating...
+        </div>
+      )}
     </div>
   );
 }
