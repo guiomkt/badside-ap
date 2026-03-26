@@ -29,14 +29,26 @@ export async function middleware(request: NextRequest) {
     data: { user },
   } = await supabase.auth.getUser();
 
+  const ALLOWED_DOMAIN = "2be.com.br";
+
   // If not logged in and not on auth pages, redirect to login
   if (
     !user &&
     !request.nextUrl.pathname.startsWith("/login") &&
-    !request.nextUrl.pathname.startsWith("/auth")
+    !request.nextUrl.pathname.startsWith("/auth") &&
+    !request.nextUrl.pathname.startsWith("/unauthorized")
   ) {
     const url = request.nextUrl.clone();
     url.pathname = "/login";
+    return NextResponse.redirect(url);
+  }
+
+  // If logged in but email domain not allowed, sign out and block
+  if (user && user.email && !user.email.endsWith(`@${ALLOWED_DOMAIN}`)) {
+    // Clear session and redirect to unauthorized page
+    await supabase.auth.signOut();
+    const url = request.nextUrl.clone();
+    url.pathname = "/unauthorized";
     return NextResponse.redirect(url);
   }
 

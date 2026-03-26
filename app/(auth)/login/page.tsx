@@ -11,9 +11,17 @@ export default function LoginPage() {
 
   const supabase = createClient();
 
+  const ALLOWED_DOMAIN = "2be.com.br";
+
   async function handleMagicLink(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
+
+    if (!email.endsWith(`@${ALLOWED_DOMAIN}`)) {
+      setError(`Apenas emails @${ALLOWED_DOMAIN} podem acessar.`);
+      return;
+    }
+
     setLoading(true);
 
     const { error } = await supabase.auth.signInWithOtp({
@@ -99,7 +107,7 @@ export default function LoginPage() {
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  placeholder="seu@email.com"
+                  placeholder="seu@2be.com.br"
                   required
                   className="w-full px-4 py-2.5 bg-white/5 border border-white/10 rounded-xl text-white placeholder:text-white/30 text-sm focus:outline-none focus:ring-2 focus:ring-[#ac0015]/50 focus:border-[#ac0015] transition-all"
                 />
