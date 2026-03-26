@@ -1,5 +1,28 @@
 @import "tailwindcss";
 
+/* GUIO Custom Fonts */
+@font-face {
+  font-family: 'ReallySans';
+  src: url('/fonts/ReallySansSmallStudent-Regular.woff2') format('woff2');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'ReallySans';
+  src: url('/fonts/ReallySansSmallStudent-Bold.woff') format('woff');
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'ReallySansDisplay';
+  src: url('/fonts/ReallySansLargeStudent-Extra-BlackItalic.woff') format('woff');
+  font-weight: 900;
+  font-style: italic;
+  font-display: swap;
+}
+
 @theme inline {
   /* Primary */
   --color-primary: #ac0015;

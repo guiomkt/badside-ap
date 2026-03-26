@@ -1,21 +1,17 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
+import Link from "next/link";
+import Image from "next/image";
 import TrafficLights from "@/components/layout/TrafficLights";
 import { createClient } from "@/lib/supabase/client";
 
-const navItems = [
-  { label: "Workspaces", icon: "workspaces", active: true },
-  { label: "Favoritos", icon: "star", active: false },
-  { label: "Recentes", icon: "schedule", active: false },
-];
-
-const clients = [
-  { name: "Cliente Alpha", icon: "folder" },
-  { name: "Cliente Beta", icon: "folder" },
-  { name: "Cliente Gamma", icon: "folder" },
-];
+interface Workspace {
+  id: string;
+  name: string;
+  slug: string;
+}
 
 interface UserInfo {
   name: string;
@@ -24,21 +20,24 @@ interface UserInfo {
 }
 
 export default function Sidebar() {
-  const [expandedClient, setExpandedClient] = useState<string | null>(null);
+  const [workspaces, setWorkspaces] = useState<Workspace[]>([]);
   const [user, setUser] = useState<UserInfo | null>(null);
   const router = useRouter();
+  const pathname = usePathname();
 
   useEffect(() => {
-    async function getUser() {
+    async function loadData() {
       const supabase = createClient();
-      const { data: { user } } = await supabase.auth.getUser();
-      if (user) {
+
+      // Load user
+      const { data: { user: authUser } } = await supabase.auth.getUser();
+      if (authUser) {
         const name =
-          user.user_metadata?.full_name ||
-          user.user_metadata?.name ||
-          user.email?.split("@")[0] ||
+          authUser.user_metadata?.full_name ||
+          authUser.user_metadata?.name ||
+          authUser.email?.split("@")[0] ||
           "User";
-        const email = user.email || "";
+        const email = authUser.email || "";
         const initials = name
           .split(" ")
           .map((n: string) => n[0])
@@ -47,8 +46,15 @@ export default function Sidebar() {
           .slice(0, 2);
         setUser({ name, email, initials });
       }
+
+      // Load workspaces
+      const { data: ws } = await supabase
+        .from("workspaces")
+        .select("id, name, slug")
+        .order("created_at", { ascending: false });
+      if (ws) setWorkspaces(ws);
     }
-    getUser();
+    loadData();
   }, []);
 
   async function handleSignOut() {
@@ -57,6 +63,9 @@ export default function Sidebar() {
     router.push("/login");
   }
 
+  const isActive = (path: string) => pathname === path;
+  const isWorkspaceActive = (slug: string) => pathname.startsWith(`/w/${slug}`);
+
   return (
     <aside className="fixed left-0 top-0 h-full w-[260px] bg-white/80 backdrop-blur-xl border-r border-zinc-200/50 flex flex-col z-50">
       {/* Traffic Lights */}
@@ -64,99 +73,76 @@ export default function Sidebar() {
         <TrafficLights />
       </div>
 
-      {/* Branding */}
-      <div className="px-5 pt-3 pb-4">
-        <h1 className="text-base font-bold tight-tracking text-[--color-on-surface]">
-          GUIO Presentations
-        </h1>
-        <p className="text-xs text-[--color-on-surface-variant] mt-0.5">
-          AI-Powered
-        </p>
-      </div>
-
-      {/* New Presentation Button */}
-      <div className="px-4 pb-4">
-        <button className="w-full flex items-center justify-center gap-2 bg-[--color-primary-container] text-white rounded-xl py-2.5 text-sm font-semibold hover:opacity-90 transition-opacity">
-          <span className="material-symbols-outlined text-[20px]">add</span>
-          New Presentation
-        </button>
+      {/* Logo */}
+      <div className="px-5 pt-3 pb-4 flex items-center gap-3">
+        <Image
+          src="/images/logo vermelha.png"
+          alt="GUIO"
+          width={32}
+          height={32}
+          className="w-8 h-8 object-contain"
+        />
+        <div>
+          <h1 className="text-base font-bold tight-tracking text-[--color-on-surface]">
+            GUIO Presentations
+          </h1>
+          <p className="text-[10px] text-[--color-on-surface-variant] mt-0.5">
+            AI-Powered
+          </p>
+        </div>
       </div>
 
       {/* Navigation */}
       <nav className="px-2 flex-1 overflow-y-auto no-scrollbar">
         <ul className="space-y-0.5">
-          {navItems.map((item) => (
-            <li key={item.label}>
-              <button
-                className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors ${
-                  item.active
-                    ? "bg-zinc-100/50 text-[--color-primary] font-medium border-l-2 border-[--color-primary]"
-                    : "text-[--color-on-surface-variant] hover:bg-zinc-100/30"
-                }`}
-              >
-                <span className="material-symbols-outlined text-[20px]">
-                  {item.icon}
-                </span>
-                {item.label}
-              </button>
-            </li>
-          ))}
+          <li>
+            <Link
+              href="/"
+              className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors ${
+                isActive("/")
+                  ? "bg-zinc-100/50 text-[--color-primary] font-medium border-l-2 border-[--color-primary]"
+                  : "text-[--color-on-surface-variant] hover:bg-zinc-100/30"
+              }`}
+            >
+              <span className="material-symbols-outlined text-[20px]">workspaces</span>
+              Workspaces
+            </Link>
+          </li>
         </ul>
 
-        {/* Clientes Ativos */}
-        <div className="mt-6">
-          <h3 className="px-3 text-[11px] font-semibold uppercase tracking-wider text-[--color-on-surface-variant]/60 mb-2">
-            Clientes Ativos
-          </h3>
-          <ul className="space-y-0.5">
-            {clients.map((client) => (
-              <li key={client.name}>
-                <button
-                  onClick={() =>
-                    setExpandedClient(
-                      expandedClient === client.name ? null : client.name
-                    )
-                  }
-                  className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm text-[--color-on-surface-variant] hover:bg-zinc-100/30 transition-colors"
-                >
-                  <span className="material-symbols-outlined text-[20px]">
-                    {expandedClient === client.name
-                      ? "folder_open"
-                      : "folder"}
-                  </span>
-                  {client.name}
-                  <span className="material-symbols-outlined text-[16px] ml-auto">
-                    {expandedClient === client.name
-                      ? "expand_less"
-                      : "expand_more"}
-                  </span>
-                </button>
-                {expandedClient === client.name && (
-                  <ul className="ml-8 mt-1 space-y-1">
-                    <li className="text-xs text-[--color-on-surface-variant]/60 py-1 px-2">
-                      Nenhum projeto ainda
-                    </li>
-                  </ul>
-                )}
-              </li>
-            ))}
-          </ul>
-        </div>
+        {/* Workspaces list */}
+        {workspaces.length > 0 && (
+          <div className="mt-6">
+            <h3 className="px-3 text-[11px] font-semibold uppercase tracking-wider text-[--color-on-surface-variant]/60 mb-2">
+              Seus Workspaces
+            </h3>
+            <ul className="space-y-0.5">
+              {workspaces.map((ws) => (
+                <li key={ws.id}>
+                  <Link
+                    href={`/w/${ws.slug}`}
+                    className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors ${
+                      isWorkspaceActive(ws.slug)
+                        ? "bg-zinc-100/50 text-[--color-primary] font-medium"
+                        : "text-[--color-on-surface-variant] hover:bg-zinc-100/30"
+                    }`}
+                  >
+                    <span className="material-symbols-outlined text-[20px]">
+                      {isWorkspaceActive(ws.slug) ? "folder_open" : "folder"}
+                    </span>
+                    {ws.name}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
       </nav>
 
       {/* Footer */}
-      <div className="border-t border-zinc-200/50 px-2 py-3 space-y-0.5">
-        <button className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm text-[--color-on-surface-variant] hover:bg-zinc-100/30 transition-colors">
-          <span className="material-symbols-outlined text-[20px]">settings</span>
-          Settings
-        </button>
-        <button className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm text-[--color-on-surface-variant] hover:bg-zinc-100/30 transition-colors">
-          <span className="material-symbols-outlined text-[20px]">help</span>
-          Help
-        </button>
-
-        {/* User Avatar */}
-        <div className="flex items-center gap-3 px-3 py-2 mt-2">
+      <div className="border-t border-zinc-200/50 px-2 py-3">
+        {/* User */}
+        <div className="flex items-center gap-3 px-3 py-2">
           <div className="w-8 h-8 rounded-full bg-[--color-primary-container] flex items-center justify-center text-white text-xs font-semibold">
             {user?.initials || ".."}
           </div>
@@ -173,9 +159,7 @@ export default function Sidebar() {
             title="Sair"
             className="p-1 rounded-lg text-[--color-on-surface-variant] hover:bg-zinc-100/30 transition-colors"
           >
-            <span className="material-symbols-outlined text-[18px]">
-              logout
-            </span>
+            <span className="material-symbols-outlined text-[18px]">logout</span>
           </button>
         </div>
       </div>
