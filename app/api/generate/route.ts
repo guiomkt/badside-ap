@@ -1,7 +1,8 @@
 import { NextRequest } from "next/server";
 import { anthropic } from "@/lib/anthropic";
 import { getGenerationPrompt } from "@/lib/prompts/system";
-import { PresentationData, BrandColors } from "@/lib/schemas/presentation";
+import { PresentationData, BrandColors, type BrandColors as BrandColorsType } from "@/lib/schemas/presentation";
+import { z } from "zod";
 
 function stripCodeBlock(text: string): string {
   let cleaned = text.trim();
@@ -17,7 +18,7 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const { briefing, brandColors } = body as {
       briefing: string;
-      brandColors?: typeof BrandColors._type;
+      brandColors?: z.infer<typeof BrandColors>;
     };
 
     if (!briefing || typeof briefing !== "string") {
@@ -28,7 +29,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Validate brand colors if provided
-    let parsedBrandColors: typeof BrandColors._type | undefined;
+    let parsedBrandColors: z.infer<typeof BrandColors> | undefined;
     if (brandColors) {
       const result = BrandColors.safeParse(brandColors);
       if (result.success) {
