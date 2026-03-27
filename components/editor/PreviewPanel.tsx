@@ -71,7 +71,7 @@ export default function PreviewPanel({
                 srcDoc={htmlContent}
                 className="w-full h-full border-0"
                 title="Slide Preview"
-                sandbox="allow-scripts"
+                sandbox="allow-scripts allow-same-origin"
               />
             ) : (
               <div className="w-full h-full flex flex-col items-center justify-center text-center p-8">
