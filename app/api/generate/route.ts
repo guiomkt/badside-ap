@@ -1,6 +1,9 @@
 import { NextRequest } from "next/server";
-import { anthropic } from "@/lib/anthropic";
+import Anthropic from "@anthropic-ai/sdk";
 import { getGenerationPrompt } from "@/lib/prompts/system";
+
+export const runtime = "edge";
+export const maxDuration = 120;
 
 function extractHtml(text: string): string {
   let cleaned = text.trim();
@@ -40,6 +43,7 @@ export async function POST(request: NextRequest) {
     }
 
     const systemPrompt = getGenerationPrompt();
+    const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 
     const encoder = new TextEncoder();
     const stream = new ReadableStream({

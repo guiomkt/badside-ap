@@ -1,0 +1,10 @@
+[build]
+  command = "npm run build"
+  publish = ".next"
+
+[functions]
+  # Increase timeout for AI generation (default is 26s)
+  external_node_modules = ["@anthropic-ai/sdk"]
+
+[[plugins]]
+  package = "@netlify/plugin-nextjs"

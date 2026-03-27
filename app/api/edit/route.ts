@@ -1,6 +1,9 @@
 import { NextRequest } from "next/server";
-import { anthropic } from "@/lib/anthropic";
+import Anthropic from "@anthropic-ai/sdk";
 import { getEditPrompt } from "@/lib/prompts/edit";
+
+export const runtime = "edge";
+export const maxDuration = 120;
 
 function stripHtmlCodeBlock(text: string): string {
   let cleaned = text.trim();
@@ -26,6 +29,7 @@ export async function POST(request: NextRequest) {
     }
 
     const systemPrompt = getEditPrompt(currentHtml);
+    const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 
     const encoder = new TextEncoder();
     const stream = new ReadableStream({
