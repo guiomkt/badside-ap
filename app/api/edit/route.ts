@@ -1,12 +1,11 @@
 import { NextRequest } from "next/server";
 import { anthropic } from "@/lib/anthropic";
 import { getEditPrompt } from "@/lib/prompts/edit";
-import { PresentationData } from "@/lib/schemas/presentation";
 
-function stripCodeBlock(text: string): string {
+function stripHtmlCodeBlock(text: string): string {
   let cleaned = text.trim();
   if (cleaned.startsWith("```")) {
-    cleaned = cleaned.replace(/^```(?:json)?\s*\n?/, "").replace(/\n?\s*```$/, "");
+    cleaned = cleaned.replace(/^```(?:html)?\s*\n?/, "").replace(/\n?\s*```$/, "");
   }
   return cleaned.trim();
 }
@@ -14,81 +13,88 @@ function stripCodeBlock(text: string): string {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { currentData, message } = body as {
-      currentData: unknown;
+    const { currentHtml, message } = body as {
+      currentHtml: string;
       message: string;
     };
 
-    if (!currentData || !message || typeof message !== "string") {
+    if (!currentHtml || !message || typeof message !== "string") {
       return Response.json(
-        { success: false, error: "Missing currentData or message" },
+        { success: false, error: "HTML atual ou mensagem ausente" },
         { status: 400 }
       );
     }
 
-    // Validate currentData against the schema
-    const currentValidation = PresentationData.safeParse(currentData);
-    if (!currentValidation.success) {
-      return Response.json(
-        {
-          success: false,
-          error: "Invalid currentData structure",
-          details: currentValidation.error.issues,
-        },
-        { status: 400 }
-      );
-    }
+    const systemPrompt = getEditPrompt(currentHtml);
 
-    const systemPrompt = getEditPrompt(currentValidation.data);
+    const encoder = new TextEncoder();
+    const stream = new ReadableStream({
+      async start(controller) {
+        try {
+          let fullResponse = "";
 
-    const response = await anthropic.messages.create({
-      model: "claude-sonnet-4-20250514",
-      max_tokens: 8192,
-      system: systemPrompt,
-      messages: [
-        {
-          role: "user",
-          content: message,
-        },
-      ],
+          const messageStream = anthropic.messages.stream({
+            model: "claude-sonnet-4-20250514",
+            max_tokens: 64000,
+            system: systemPrompt,
+            messages: [
+              {
+                role: "user",
+                content: message,
+              },
+            ],
+          });
+
+          messageStream.on("text", (text) => {
+            fullResponse += text;
+            controller.enqueue(
+              encoder.encode(
+                `data: ${JSON.stringify({ type: "chunk", content: text })}\n\n`
+              )
+            );
+          });
+
+          await messageStream.finalMessage();
+
+          const html = stripHtmlCodeBlock(fullResponse);
+
+          if (!html.includes("<!DOCTYPE") && !html.includes("<html")) {
+            controller.enqueue(
+              encoder.encode(
+                `data: ${JSON.stringify({ type: "error", error: "A IA não retornou um HTML válido." })}\n\n`
+              )
+            );
+            controller.close();
+            return;
+          }
+
+          controller.enqueue(
+            encoder.encode(
+              `data: ${JSON.stringify({ type: "done", html })}\n\n`
+            )
+          );
+          controller.close();
+        } catch (err) {
+          const msg = err instanceof Error ? err.message : "Erro na edição";
+          controller.enqueue(
+            encoder.encode(
+              `data: ${JSON.stringify({ type: "error", error: msg })}\n\n`
+            )
+          );
+          controller.close();
+        }
+      },
     });
 
-    // Extract text content from the response
-    const textContent = response.content.find((block) => block.type === "text");
-    if (!textContent || textContent.type !== "text") {
-      return Response.json(
-        { success: false, error: "No text response from AI" },
-        { status: 500 }
-      );
-    }
-
-    const cleanedJson = stripCodeBlock(textContent.text);
-    let parsed: unknown;
-    try {
-      parsed = JSON.parse(cleanedJson);
-    } catch {
-      return Response.json(
-        { success: false, error: "Failed to parse JSON from AI response" },
-        { status: 500 }
-      );
-    }
-
-    const validation = PresentationData.safeParse(parsed);
-    if (!validation.success) {
-      return Response.json(
-        {
-          success: false,
-          error: "Invalid presentation structure in AI response",
-          details: validation.error.issues,
-        },
-        { status: 500 }
-      );
-    }
-
-    return Response.json({ success: true, data: validation.data });
+    return new Response(stream, {
+      headers: {
+        "Content-Type": "text/event-stream",
+        "Cache-Control": "no-cache",
+        Connection: "keep-alive",
+      },
+    });
   } catch (err) {
-    const message =
-      err instanceof Error ? err.message : "Internal server error";
+    const message = err instanceof Error ? err.message : "Erro interno";
     return Response.json({ success: false, error: message }, { status: 500 });
   }
 }
