@@ -70,7 +70,7 @@ export default function Sidebar() {
       {/* Logo */}
       <div className="px-5 pt-5 pb-4 flex items-center gap-3">
         <Image
-          src="/images/logo vermelha.png"
+          src="/images/logo-vermelha.png"
           alt="GUIO"
           width={32}
           height={32}
