@@ -1,9 +1,10 @@
 "use client";
 
-import { use } from "react";
+import { use, useState } from "react";
 import Link from "next/link";
 import ChatPanel from "@/components/editor/ChatPanel";
 import PreviewPanel from "@/components/editor/PreviewPanel";
+import ShareModal from "@/components/editor/ShareModal";
 import { usePresentation } from "@/lib/hooks/usePresentation";
 
 export default function EditorPage({
@@ -21,6 +22,8 @@ export default function EditorPage({
     error,
     sendMessage,
   } = usePresentation(workspace, slug);
+
+  const [shareOpen, setShareOpen] = useState(false);
 
   const slideData = presentation?.slide_data as Record<string, unknown> | undefined;
   const slides = slideData?.slides as unknown[] | undefined;
@@ -82,7 +85,10 @@ export default function EditorPage({
           </Link>
 
           {/* Share button */}
-          <button className="flex items-center gap-1.5 px-4 py-1.5 rounded-lg premium-gradient text-white text-xs font-semibold">
+          <button
+            onClick={() => setShareOpen(true)}
+            className="flex items-center gap-1.5 px-4 py-1.5 rounded-lg premium-gradient text-white text-xs font-semibold"
+          >
             <span className="material-symbols-outlined text-[16px]">
               share
             </span>
@@ -136,6 +142,15 @@ export default function EditorPage({
           </span>
           IA Gerando...
         </div>
+      )}
+
+      {/* Share Modal */}
+      {presentation && (
+        <ShareModal
+          presentationId={presentation.id}
+          isOpen={shareOpen}
+          onClose={() => setShareOpen(false)}
+        />
       )}
     </div>
   );
