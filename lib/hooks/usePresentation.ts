@@ -127,13 +127,15 @@ export function usePresentation(workspaceSlug: string, presentationSlug: string)
         let html: string;
         let assistantContent: string;
 
+        const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL || "https://mhdykhfxwaqzkpsbhbzk.supabase.co";
+
         if (!hasHtml) {
-          // First message: GENERATE new presentation
-          html = await streamRequest("/api/generate", { briefing: content });
+          // First message: GENERATE via Supabase Edge Function
+          html = await streamRequest(`${SUPABASE_URL}/functions/v1/generate`, { briefing: content });
           assistantContent = "Apresentação gerada com sucesso! Confira o preview ao lado.";
         } else {
-          // Edit existing presentation
-          html = await streamRequest("/api/edit", { currentHtml: presentation.html_content, message: content });
+          // Edit existing via Supabase Edge Function
+          html = await streamRequest(`${SUPABASE_URL}/functions/v1/edit`, { currentHtml: presentation.html_content, message: content });
           assistantContent = "Apresentação atualizada! As alterações estão no preview.";
         }
 
