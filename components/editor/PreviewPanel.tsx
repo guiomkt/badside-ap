@@ -37,7 +37,7 @@ export default function PreviewPanel({
     }
   }, [htmlContent]);
 
-  const hasContent = !!htmlContent && totalSlides > 0;
+  const hasContent = !!htmlContent && htmlContent.length > 100;
 
   return (
     <div className="flex-1 bg-[#f3f3f3] flex flex-col items-center justify-center relative h-full overflow-hidden">

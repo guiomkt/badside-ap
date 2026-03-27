@@ -58,6 +58,49 @@ body {
   -moz-osx-font-smoothing: grayscale;
 }
 
+/* Global cursor & interactivity */
+button,
+a,
+[role="button"],
+summary,
+label[for] {
+  cursor: pointer;
+}
+input,
+textarea,
+select {
+  cursor: text;
+}
+input[type="checkbox"],
+input[type="radio"] {
+  cursor: pointer;
+}
+button:disabled {
+  cursor: not-allowed;
+}
+
+/* Global focus-visible */
+button:focus-visible,
+a:focus-visible,
+input:focus-visible,
+textarea:focus-visible,
+select:focus-visible,
+[role="button"]:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}
+
+/* Global hover feedback for buttons */
+button:not(:disabled):hover,
+[role="button"]:hover {
+  transition: all 0.15s ease;
+}
+
+/* Smooth transitions globally */
+* {
+  transition-timing-function: cubic-bezier(0.16, 1, 0.3, 1);
+}
+
 /* Glass panel */
 .glass-panel {
   backdrop-filter: blur(24px);
