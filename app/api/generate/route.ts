@@ -2,11 +2,28 @@ import { NextRequest } from "next/server";
 import { anthropic } from "@/lib/anthropic";
 import { getGenerationPrompt } from "@/lib/prompts/system";
 
-function stripHtmlCodeBlock(text: string): string {
+function extractHtml(text: string): string {
   let cleaned = text.trim();
+
+  // Remove ```html ... ``` wrapping
   if (cleaned.startsWith("```")) {
     cleaned = cleaned.replace(/^```(?:html)?\s*\n?/, "").replace(/\n?\s*```$/, "");
   }
+
+  // If there's text before <!DOCTYPE, strip it
+  const doctypeIndex = cleaned.indexOf("<!DOCTYPE");
+  const htmlIndex = cleaned.indexOf("<html");
+  const startIndex = doctypeIndex >= 0 ? doctypeIndex : htmlIndex;
+  if (startIndex > 0) {
+    cleaned = cleaned.substring(startIndex);
+  }
+
+  // If there's text after </html>, strip it
+  const endIndex = cleaned.lastIndexOf("</html>");
+  if (endIndex >= 0) {
+    cleaned = cleaned.substring(0, endIndex + "</html>".length);
+  }
+
   return cleaned.trim();
 }
 
@@ -32,7 +49,7 @@ export async function POST(request: NextRequest) {
 
           const messageStream = anthropic.messages.stream({
             model: "claude-haiku-4-5-20251001",
-            max_tokens: 64000,
+            max_tokens: 16384,
             system: systemPrompt,
             messages: [
               {
@@ -53,8 +70,9 @@ export async function POST(request: NextRequest) {
 
           await messageStream.finalMessage();
 
-          // Clean up the response (remove ```html wrapper if present)
-          const html = stripHtmlCodeBlock(fullResponse);
+          // Extract HTML from response
+          const html = extractHtml(fullResponse);
+          console.log(`[generate] Response length: ${fullResponse.length}, HTML length: ${html.length}, starts with: ${html.substring(0, 50)}`);
 
           // Basic validation: must contain <!DOCTYPE or <html
           if (!html.includes("<!DOCTYPE") && !html.includes("<html")) {
