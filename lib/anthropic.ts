@@ -1,10 +1,20 @@
 import Anthropic from "@anthropic-ai/sdk";
 
-// Supports both:
-// 1. ANTHROPIC_API_KEY (pay-per-token API key)
-// 2. CLAUDE_SESSION_KEY (OAuth token from Claude subscription - uses monthly credits)
-const apiKey = process.env.ANTHROPIC_API_KEY || process.env.CLAUDE_SESSION_KEY;
+const apiKey = process.env.ANTHROPIC_API_KEY || process.env.CLAUDE_SESSION_KEY || "";
+
+// OAuth tokens from Claude Code (sk-ant-oat01-*) need Authorization: Bearer header
+// Regular API keys (sk-ant-api*) use the default x-api-key header
+const isOAuthToken = apiKey.startsWith("sk-ant-oat01-");
 
 export const anthropic = new Anthropic({
-  apiKey,
+  apiKey: isOAuthToken ? undefined : apiKey,
+  ...(isOAuthToken
+    ? {
+        defaultHeaders: {
+          Authorization: `Bearer ${apiKey}`,
+        },
+        // OAuth tokens may need the api.claude.ai endpoint
+        baseURL: "https://api.anthropic.com",
+      }
+    : {}),
 });
