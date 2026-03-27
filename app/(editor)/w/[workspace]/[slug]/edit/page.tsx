@@ -22,7 +22,9 @@ export default function EditorPage({
     sendMessage,
   } = usePresentation(workspace, slug);
 
-  const slideCount = presentation?.slide_data?.slides?.length ?? 0;
+  const slideData = presentation?.slide_data as Record<string, unknown> | undefined;
+  const slides = slideData?.slides as unknown[] | undefined;
+  const slideCount = slides?.length ?? 0;
 
   return (
     <div className="h-screen w-screen flex flex-col overflow-hidden bg-[--color-surface]">
