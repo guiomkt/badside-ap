@@ -27,7 +27,7 @@ export default function SlideIndicator({
 
       {/* Text */}
       <span className="text-xs text-[--color-on-surface-variant]">
-        Slide {current} of {total} — {statusText}
+        Slide {current} de {total} — {statusText}
       </span>
     </div>
   );

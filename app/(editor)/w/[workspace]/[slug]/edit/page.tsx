@@ -1,7 +1,7 @@
 "use client";
 
 import { use } from "react";
-import TrafficLights from "@/components/layout/TrafficLights";
+import Link from "next/link";
 import ChatPanel from "@/components/editor/ChatPanel";
 import PreviewPanel from "@/components/editor/PreviewPanel";
 import { usePresentation } from "@/lib/hooks/usePresentation";
@@ -28,9 +28,16 @@ export default function EditorPage({
     <div className="h-screen w-screen flex flex-col overflow-hidden bg-[--color-surface]">
       {/* Top Navigation */}
       <nav className="h-12 flex items-center px-4 border-b border-zinc-200/40 bg-white/60 glass-panel flex-shrink-0 z-30">
-        {/* Left: traffic lights + logo */}
-        <div className="flex items-center gap-4">
-          <TrafficLights />
+        {/* Left: back button + logo */}
+        <div className="flex items-center gap-3">
+          <Link
+            href={`/w/${workspace}`}
+            className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-zinc-100/50 transition-colors"
+          >
+            <span className="material-symbols-outlined text-[18px] text-[--color-on-surface-variant]">
+              arrow_back
+            </span>
+          </Link>
           <div className="flex items-center gap-1.5">
             <span className="text-sm font-bold tight-tracking text-[--color-on-surface]">
               GUIO
@@ -39,22 +46,6 @@ export default function EditorPage({
               Presentations
             </span>
           </div>
-        </div>
-
-        {/* Center: nav tabs */}
-        <div className="flex items-center gap-1 ml-8">
-          {["Projeto", "Slides", "Temas"].map((tab) => (
-            <button
-              key={tab}
-              className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
-                tab === "Projeto"
-                  ? "bg-zinc-900 text-white"
-                  : "text-[--color-on-surface-variant] hover:bg-zinc-100/60"
-              }`}
-            >
-              {tab}
-            </button>
-          ))}
         </div>
 
         {/* Center: title */}
@@ -76,20 +67,17 @@ export default function EditorPage({
 
         {/* Right section */}
         <div className="flex items-center gap-2 ml-auto">
-          {/* Search */}
-          <button className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-zinc-100/50 transition-colors">
-            <span className="material-symbols-outlined text-[18px] text-[--color-on-surface-variant]">
-              search
-            </span>
-          </button>
-
-          {/* History */}
-          <button className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium text-[--color-on-surface-variant] hover:bg-zinc-100/50 transition-colors">
+          {/* Apresentar button */}
+          <Link
+            href={`/w/${workspace}/${slug}`}
+            target="_blank"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium text-[--color-on-surface-variant] hover:bg-zinc-100/50 transition-colors"
+          >
             <span className="material-symbols-outlined text-[16px]">
-              history
+              slideshow
             </span>
-            History
-          </button>
+            Apresentar
+          </Link>
 
           {/* Share button */}
           <button className="flex items-center gap-1.5 px-4 py-1.5 rounded-lg premium-gradient text-white text-xs font-semibold">
@@ -113,7 +101,7 @@ export default function EditorPage({
             <div className="flex flex-col items-center gap-3">
               <div className="w-8 h-8 border-2 border-zinc-300 border-t-[#d12429] rounded-full animate-spin" />
               <span className="text-sm text-[--color-on-surface-variant]">
-                Loading presentation...
+                Carregando apresentação...
               </span>
             </div>
           </div>
@@ -130,6 +118,8 @@ export default function EditorPage({
               htmlContent={presentation?.html_content ?? undefined}
               currentSlide={1}
               totalSlides={slideCount}
+              workspaceSlug={workspace}
+              presentationSlug={slug}
             />
           </>
         )}
@@ -142,7 +132,7 @@ export default function EditorPage({
             <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75" />
             <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500" />
           </span>
-          AI Generating...
+          IA Gerando...
         </div>
       )}
     </div>

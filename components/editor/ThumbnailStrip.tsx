@@ -34,19 +34,6 @@ export default function ThumbnailStrip({
         );
       })}
 
-      {/* Add slide placeholder */}
-      <button className="w-10 h-6 border border-dashed border-zinc-300/80 rounded-sm flex items-center justify-center animate-pulse flex-shrink-0">
-        <span className="material-symbols-outlined text-[14px] text-zinc-400">
-          add
-        </span>
-      </button>
-
-      {/* Add button */}
-      <button className="w-8 h-8 rounded-full bg-white border border-zinc-200/50 flex items-center justify-center shadow-sm hover:bg-zinc-50 transition-colors mt-auto flex-shrink-0">
-        <span className="material-symbols-outlined text-[16px] text-[--color-on-surface-variant]">
-          add
-        </span>
-      </button>
     </div>
   );
 }

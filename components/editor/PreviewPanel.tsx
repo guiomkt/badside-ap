@@ -9,12 +9,16 @@ interface PreviewPanelProps {
   htmlContent?: string;
   currentSlide: number;
   totalSlides: number;
+  workspaceSlug: string;
+  presentationSlug: string;
 }
 
 export default function PreviewPanel({
   htmlContent,
   currentSlide,
   totalSlides,
+  workspaceSlug,
+  presentationSlug,
 }: PreviewPanelProps) {
   const [activeSlide, setActiveSlide] = useState(currentSlide);
   const iframeRef = useRef<HTMLIFrameElement>(null);
@@ -38,7 +42,14 @@ export default function PreviewPanel({
   return (
     <div className="flex-1 bg-[#f3f3f3] flex flex-col items-center justify-center relative h-full overflow-hidden">
       {/* Floating toolbar */}
-      {hasContent && <FloatingToolbar />}
+      {hasContent && (
+        <FloatingToolbar
+          currentSlide={activeSlide}
+          totalSlides={totalSlides}
+          workspaceSlug={workspaceSlug}
+          presentationSlug={presentationSlug}
+        />
+      )}
 
       {/* Slide canvas area */}
       <div className="flex items-stretch w-full max-w-[90%] flex-1 py-16 gap-0">
@@ -70,11 +81,11 @@ export default function PreviewPanel({
                   </span>
                 </div>
                 <h3 className="text-lg font-semibold text-[--color-on-surface] tight-tracking mb-1">
-                  Preview da Apresentacao
+                  Preview da Apresentação
                 </h3>
                 <p className="text-sm text-[--color-on-surface-variant] max-w-xs">
-                  Descreva sua apresentacao no chat e a IA ira gerar os slides
-                  automaticamente.
+                  Descreva sua apresentação no chat ao lado e a IA irá gerar os
+                  slides automaticamente para você.
                 </p>
               </div>
             )}

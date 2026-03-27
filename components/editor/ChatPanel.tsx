@@ -82,7 +82,7 @@ export default function ChatPanel({
             GUIO Assistant
           </h2>
           <p className="text-[11px] text-[--color-on-surface-variant]">
-            {isGenerating ? "Generating..." : "AI Copilot"}
+            {isGenerating ? "Gerando..." : "AI Copilot"}
           </p>
         </div>
         <button className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-zinc-100/50 transition-colors">
@@ -98,8 +98,8 @@ export default function ChatPanel({
         {!hasMessages && (
           <div className="flex flex-col items-start">
             <div className="max-w-[85%] px-4 py-2.5 text-sm leading-relaxed bg-white border border-zinc-200/60 rounded-2xl rounded-tl-none text-[--color-on-surface]">
-              Ola! Sou o GUIO Assistant. Descreva a apresentacao que deseja
-              criar e eu vou gerar os slides para voce.
+              Olá! Sou o GUIO Assistant. Descreva a apresentação que você
+              deseja criar e eu vou gerar os slides automaticamente para você.
             </div>
           </div>
         )}
@@ -148,10 +148,10 @@ export default function ChatPanel({
               </span>
               <span className="text-xs font-medium text-[--color-on-surface-variant]">
                 {progress < 85
-                  ? "Generating Slides..."
+                  ? "Gerando slides..."
                   : progress < 90
-                  ? "Validating..."
-                  : "Compiling HTML..."}
+                  ? "Validando..."
+                  : "Compilando HTML..."}
               </span>
             </div>
 
@@ -159,7 +159,7 @@ export default function ChatPanel({
             <div className="w-full max-w-[85%] bg-[--color-primary]/5 rounded-2xl px-4 py-3 space-y-2">
               <div className="flex items-center justify-between">
                 <span className="text-xs font-medium text-[--color-on-surface]">
-                  Progress
+                  Progresso
                 </span>
                 <span className="text-xs font-semibold text-[--color-primary]">
                   {Math.round(progress)}%
@@ -189,8 +189,8 @@ export default function ChatPanel({
             onKeyDown={handleKeyDown}
             placeholder={
               isGenerating
-                ? "Aguarde a geracao..."
-                : "Descreva sua apresentacao..."
+                ? "Aguarde a geração..."
+                : "Descreva sua apresentação..."
             }
             disabled={isGenerating}
             className="flex-1 bg-transparent text-sm text-[--color-on-surface] placeholder:text-[--color-on-surface-variant]/40 resize-none outline-none max-h-[120px] disabled:opacity-50"

@@ -64,7 +64,7 @@ export function usePresentation(workspaceSlug: string, presentationSlug: string)
           .single();
 
         if (presErr || !pres) {
-          setError("Presentation not found");
+          setError("Apresentação não encontrada");
           setIsLoading(false);
           return;
         }
@@ -81,14 +81,14 @@ export function usePresentation(workspaceSlug: string, presentationSlug: string)
         .single();
 
       if (presErr || !pres) {
-        setError("Presentation not found");
+        setError("Apresentação não encontrada");
         setIsLoading(false);
         return;
       }
 
       setPresentation(pres as Presentation);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to load presentation");
+      setError(err instanceof Error ? err.message : "Erro ao carregar a apresentação");
     } finally {
       setIsLoading(false);
     }
@@ -152,14 +152,14 @@ export function usePresentation(workspaceSlug: string, presentationSlug: string)
 
     if (updateErr) {
       console.error("Failed to save presentation:", updateErr);
-      throw new Error("Failed to save presentation");
+      throw new Error("Erro ao salvar a apresentação");
     }
   }
 
   const sendMessage = useCallback(
     async (content: string) => {
       if (!presentation) {
-        setError("No presentation loaded");
+        setError("Nenhuma apresentação carregada");
         return;
       }
 
@@ -194,7 +194,7 @@ export function usePresentation(workspaceSlug: string, presentationSlug: string)
           // First message: call /api/generate with SSE streaming
           const result = await streamGenerate(content);
           slideData = result.data;
-          assistantContent = `Apresentacao gerada com ${slideData.slides.length} slides: "${slideData.title}"`;
+          assistantContent = `Apresentação gerada com ${slideData.slides.length} slides: "${slideData.title}"`;
         } else {
           // Edit existing: call /api/edit
           const res = await fetch("/api/edit", {
@@ -211,7 +211,7 @@ export function usePresentation(workspaceSlug: string, presentationSlug: string)
             throw new Error(result.error || "Edit failed");
           }
           slideData = result.data;
-          assistantContent = `Slides atualizados com sucesso. A apresentacao agora tem ${slideData.slides.length} slides.`;
+          assistantContent = `Slides atualizados com sucesso. A apresentação agora tem ${slideData.slides.length} slides.`;
         }
 
         // 4. Compile to HTML
@@ -266,7 +266,7 @@ export function usePresentation(workspaceSlug: string, presentationSlug: string)
         setMessages((prev) => [...prev, assistantMsg]);
       } catch (err) {
         const errMsg =
-          err instanceof Error ? err.message : "An error occurred";
+          err instanceof Error ? err.message : "Ocorreu um erro";
         setError(errMsg);
 
         // Add error message to chat
@@ -299,12 +299,12 @@ export function usePresentation(workspaceSlug: string, presentationSlug: string)
     });
 
     if (!res.ok) {
-      const err = await res.json().catch(() => ({ error: "Generation failed" }));
-      throw new Error(err.error || "Generation failed");
+      const err = await res.json().catch(() => ({ error: "Erro na geração" }));
+      throw new Error(err.error || "Erro na geração");
     }
 
     const reader = res.body?.getReader();
-    if (!reader) throw new Error("No response stream");
+    if (!reader) throw new Error("Sem stream de resposta");
 
     const decoder = new TextDecoder();
     let buffer = "";
@@ -339,7 +339,7 @@ export function usePresentation(workspaceSlug: string, presentationSlug: string)
             resultData = event.data;
             setProgress(88);
           } else if (event.type === "error") {
-            throw new Error(event.error || "Generation error");
+            throw new Error(event.error || "Erro na geração");
           }
         } catch (parseErr) {
           // If it's not a JSON parse issue for SSE, re-throw
@@ -355,7 +355,7 @@ export function usePresentation(workspaceSlug: string, presentationSlug: string)
     abortRef.current = null;
 
     if (!resultData) {
-      throw new Error("No presentation data received from generation");
+      throw new Error("Nenhum dado de apresentação recebido da geração");
     }
 
     return { data: resultData };

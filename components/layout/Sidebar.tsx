@@ -4,7 +4,6 @@ import { useState, useEffect } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
-import TrafficLights from "@/components/layout/TrafficLights";
 import { createClient } from "@/lib/supabase/client";
 
 interface Workspace {
@@ -68,13 +67,8 @@ export default function Sidebar() {
 
   return (
     <aside className="fixed left-0 top-0 h-full w-[260px] bg-white/80 backdrop-blur-xl border-r border-zinc-200/50 flex flex-col z-50">
-      {/* Traffic Lights */}
-      <div className="px-5 pt-5 pb-2">
-        <TrafficLights />
-      </div>
-
       {/* Logo */}
-      <div className="px-5 pt-3 pb-4 flex items-center gap-3">
+      <div className="px-5 pt-5 pb-4 flex items-center gap-3">
         <Image
           src="/images/logo vermelha.png"
           alt="GUIO"
